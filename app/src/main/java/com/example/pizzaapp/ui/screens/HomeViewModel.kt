@@ -31,16 +31,11 @@ class HomeViewModel : ViewModel() {
                 }
             )
         }
-        _state.update {
-            it.copy(ingredients = it.ingredients.apply {
-                this[currentIngredient].isSelected = isSelected
-            })
-        }
     }
 
 
     private fun initHome() {
-        _state.update { it.copy(pizzas = getInitPizzas(), ingredients = getInitIngredients()) }
+        _state.update { it.copy(pizzas = getInitPizzas())}
     }
 
 

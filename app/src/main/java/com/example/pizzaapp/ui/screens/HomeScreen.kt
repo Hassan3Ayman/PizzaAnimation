@@ -1,12 +1,16 @@
 package com.example.pizzaapp.ui.screens
 
+import android.widget.ToggleButton
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,6 +21,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,11 +47,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -86,7 +94,7 @@ private fun HomeContent(
         DishPager(state.size, onChangeSize, state.pizzas, pagerState = pagerState)
         Spacer(modifier = Modifier.height(32.dp))
         PizzaIngredients(
-            ingredients = state.ingredients,
+            ingredients = state.pizzas[pagerState.currentPage].ingredients,
             currentPizza = pagerState.currentPage,
             onClickIngredient = onClickIngredient
         )
@@ -182,28 +190,25 @@ fun Pager(
             }
         }
     }
-
-    LaunchedEffect(key1 = pagerState.currentPage){
-
-    }
 }
 
 @Composable
 fun SizeButton(letter: String, size: Size, selectedSize: Size, onChangeSize: (Size) -> Unit) {
 
     val buttonElevation by animateDpAsState(targetValue = if (size == selectedSize) 5.dp else 0.dp)
+
     Button(
         modifier = Modifier
             .size(64.dp),
         onClick = { onChangeSize(size) },
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = buttonElevation),
         shape = CircleShape,
         colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
     ) {
         Text(
             text = letter,
             fontSize = 20.sp,
-            color = Color.Black
+            color = Color.Black,
+            textAlign = TextAlign.Center
         )
     }
 
@@ -215,17 +220,45 @@ fun SizesRow(
     selectedSize: Size,
     onChangeSize: (Size) -> Unit
 ) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.CenterVertically
+
+    val offsetAnimation: Dp by animateDpAsState(
+        when (selectedSize) {
+            Size.SMALL -> 5.dp
+            Size.MEDIUM -> 80.dp
+            Size.LARGE -> 150.dp
+            else -> 0.dp
+        }, spring(stiffness = Spring.StiffnessLow), label = ""
     )
-    {
-        SizeButton("S", Size.SMALL, selectedSize = selectedSize, onChangeSize)
-        Spacer(modifier = Modifier.width(8.dp))
-        SizeButton("M", Size.MEDIUM, selectedSize = selectedSize, onChangeSize)
-        Spacer(modifier = Modifier.width(8.dp))
-        SizeButton("L", Size.LARGE, selectedSize = selectedSize, onChangeSize)
+
+    Box(modifier = modifier) {
+        Box(
+            modifier = Modifier
+                .size(50.dp)
+                .fillMaxSize()
+                .absoluteOffset(x = offsetAnimation)
+                .shadow(
+                    elevation = 6.dp,
+                    shape = CircleShape,
+                    ambientColor = Color.Black,
+                    spotColor = Color.Black
+                )
+                .clip(CircleShape)
+                .background(Color.White)
+                .align(Alignment.CenterStart)
+        )
+
+        Row(
+            modifier = Modifier.align(Alignment.BottomCenter),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.Bottom
+        )
+        {
+            SizeButton("S", Size.SMALL, selectedSize = selectedSize, onChangeSize)
+            Spacer(modifier = Modifier.width(8.dp))
+            SizeButton("M", Size.MEDIUM, selectedSize = selectedSize, onChangeSize)
+            Spacer(modifier = Modifier.width(8.dp))
+            SizeButton("L", Size.LARGE, selectedSize = selectedSize, onChangeSize)
+        }
     }
 }
 
@@ -259,7 +292,7 @@ fun PizzaIngredient(
     index: Int
 ) {
     val backgroundColor by animateColorAsState(
-        targetValue = if (ingredient.isSelected) SelectedItem else Color.Transparent
+        targetValue = if (ingredient.isSelected) SelectedItem else Color.Transparent, tween(300)
     )
     Image(
         modifier = Modifier
@@ -302,15 +335,20 @@ fun AppBar() {
 
 @Composable
 fun BuyButton() {
-    Row(modifier = Modifier
-        .fillMaxWidth(.4f)
-        .clip(RoundedCornerShape(12.dp))
-        .background(Color.DarkGray)
-        .padding(8.dp),
+    Row(
+        modifier = Modifier
+            .fillMaxWidth(.4f)
+            .clip(RoundedCornerShape(12.dp))
+            .background(Color.DarkGray)
+            .padding(8.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(painter = painterResource(id = R.drawable.ic_buy), contentDescription = "", tint = Color.White)
+        Icon(
+            painter = painterResource(id = R.drawable.ic_buy),
+            contentDescription = "",
+            tint = Color.White
+        )
         Spacer(modifier = Modifier.width(8.dp))
         Text(text = "Add to Cart", color = Color.White, fontSize = 14.sp)
     }

@@ -4,7 +4,6 @@ import com.example.pizzaapp.R
 
 data class HomeUiState(
     val pizzas: List<PizzaUiState> = emptyList(),
-    val ingredients: List<IngredientUiState> = emptyList(),
     val size: Size = Size.MEDIUM
 )
 
